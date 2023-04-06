@@ -2,10 +2,15 @@
 
 # This script prepare images (change size and place watermark)
 # to be published on currated Wordpress site.
-# It (TODO) accept folder name to be processed.
+# It accept folder name to be processed.
 # File with watermark should be in same directory as this script
 
-SOURCE=source
+if [ ! -n "$1" ]; then
+    echo "Provide a folder name"
+    exit 1
+fi
+
+SOURCE="$1"
 SMALL="$SOURCE"_sm
 PUBLISH="$SOURCE"_publish
 # This value set for vertical size in wordpress settings
@@ -18,7 +23,6 @@ if [ -d "$SOURCE" ]; then
         mkdir "$SMALL";
     fi
     mogrify -resize x$VSIZE -path "$SMALL" ./*.jpg;
-    # cd ..;
 else
     echo "$SOURCE" directory does not exist;
 fi
