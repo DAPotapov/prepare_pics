@@ -36,9 +36,11 @@ if [ -f ../"$WM" ]; then
         for f in ./*.jpg
             do
                 echo Adding watermark to "$f";
-                composite -gravity south ../../$WM "$f" ../"$PUBLISH"/"$f";
+                composite -gravity south ../../$WM "$f" ../"$PUBLISH"/"$f"; # добавить сюда экзит с эчо на случай ошибки
             done;
-        cd ..;
+        cd ../..;
+        mv "$SOURCE" "$SOURCE"_done; # add check for source directory just in case?
+        echo "Operation completed";
     fi
 else
     echo File $WM containing watermark must be in the same directory as this script;
