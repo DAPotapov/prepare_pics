@@ -1,25 +1,24 @@
 #!/usr/bin/bash
 
-PUBLISH=publish
 SOURCE=source
-SMALL=sm
+SMALL="$SOURCE"_sm
+PUBLISH="$SOURCE"_publish
 # This value set for vertical size in wordpress settings
 VSIZE=1024
 WM=watermark.png
 
-if [ ! -d "$SMALL" ]; then
-    mkdir "$SMALL";
-fi
-
 if [ -d "$SOURCE" ]; then
     cd "$SOURCE" || exit 1;
-    mogrify -resize x$VSIZE -path ../"$SMALL" ./*.jpg;
-    cd ..;
+    if [ ! -d "$SMALL" ]; then
+        mkdir "$SMALL";
+    fi
+    mogrify -resize x$VSIZE -path "$SMALL" ./*.jpg;
+    # cd ..;
 else
     echo "$SOURCE" directory does not exist;
 fi
 
-if [ -f "$WM" ]; then
+if [ -f ../"$WM" ]; then
     if [ -d "$SMALL" ]; then
         if [ ! -d "$PUBLISH" ]; then
             mkdir "$PUBLISH"
@@ -28,7 +27,7 @@ if [ -f "$WM" ]; then
         for f in ./*.jpg
             do
                 echo Adding watermark to "$f";
-                composite -gravity south ../$WM "$f" ../"$PUBLISH"/"$f";
+                composite -gravity south ../../$WM "$f" ../"$PUBLISH"/"$f";
             done;
         cd ..;
     fi
