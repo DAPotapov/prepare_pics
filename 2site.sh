@@ -1,5 +1,10 @@
 #!/usr/bin/bash
 
+# This script prepare images (change size and place watermark)
+# to be published on currated Wordpress site.
+# It (TODO) accept folder name to be processed.
+# File with watermark should be in same directory as this script
+
 SOURCE=source
 SMALL="$SOURCE"_sm
 PUBLISH="$SOURCE"_publish

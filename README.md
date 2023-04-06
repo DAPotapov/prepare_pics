@@ -1,2 +1,5 @@
 # prepare_pics
-BASH script for prepare pictures for posting on WP site
+This script prepare images (change size and place watermark)
+to be published on currated Wordpress site.
+It (TODO) accept folder name to be processed.
+File with watermark should be in same directory as this script
