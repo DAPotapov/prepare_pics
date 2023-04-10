@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/bash 
 
 if [ -z "$1" ]; then
     echo "This script prepares images (changes size and adds watermark) to be published on Wordpress site.";
@@ -9,57 +9,66 @@ if [ -z "$1" ]; then
     exit 1;
 fi
 
-SOURCE="$1"
-SMALL="$SOURCE"_sm
-PUBLISH="$SOURCE"_publish
+pics_dir="$1"
+# Suffixes for processed files' folders
+small=_sm
+publish=_publish
 # This value set for vertical size in wordpress settings
-VSIZE=1024
-# WM=nofile.png # for testing purposes
-WM=watermark.png
+vsize=1024
+watermark=watermark.png # надо сохранить полный путь к файлу
 
-if [ -d "$SOURCE" ]; then
-    cd "$SOURCE" || exit 1;
-    if [ ! -d "$SMALL" ]; then
-        mkdir "$SMALL" || { echo "Couldn't create folder '$SMALL'. Maybe don't have enough permissions."; exit 1; }
-    fi
-    for f in ./*.jpg
-        do 
-            height=$(identify -format '%h' "$f")
-            if [ "$height" -gt "$VSIZE" ] 
-            then
-                echo "Resizing '$f'";
-                mogrify -resize x$VSIZE -path "$SMALL" "$f" || { echo "Couldn't resize file '$f'."; exit 1; }
+check_folder ()
+{
+    cd "$1" || exit 1;
+    for f in *; do
+        if [ -d "$f" ]; then
+            if [ "${f: -3}" == "_sm" ] || [ "${f: -8}" == "_publish" ] || [ "${f: -5}" == "_done" ]; then
+                echo "'$f' seems like already processed folder - won't be processed"
             else
-                echo "File '$f' height ('$height') is lower than '$VSIZE'. Left unchanged.";
-                cp "$f" "$SMALL";
+                echo "'$f' is directory, going deeper"
+                check_folder "$f"
             fi
-        done
+        elif [ -f "$f" ]; then
+            if [[ $(file --mime-type -b "$f") =~ image* ]]; then
+                # Call image processing function with current directory and current file name as arguments
+                process_files "${PWD##*/}" "$f"
+            else
+                echo "'$f' is not an image, won't be processed"
+            fi
+        else 
+            echo "Unable to proceed '$f'. Skipping"
+        fi
+    done
+    cd ..
+}
+
+process_files ()
+{
+    # echo "Folder: $1 , file: $2"
+    if [ ! -d "$1$small" ]; then
+        mkdir "$1$small" || { echo "Couldn't create folder '$1$small'. Maybe don't have enough permissions."; exit 1; }        
+    fi
+    height=$(identify -format '%h' "$2")
+    if [ "$height" -gt "$vsize" ]; then
+        echo "Resizing '$2'";
+        convert -resize x$vsize "$2" "$1$small/$2"  || { echo "Couldn't resize file '$2'."; exit 1; }
+    else
+        echo "File '$2' height ('$height') is lower than '$vsize'. No need to resize";
+        cp "$2" "$1$small" || { echo "Error while copying file '$2' to '$1$small'"; exit 1; }
+    fi
+    if [ ! -d "$1$publish" ]; then
+        mkdir "$1$publish" || exit 1;
+    fi
+    echo "Adding watermark to '$f'";
+    composite -gravity south "$watermark" "$2" "$1$publish"/"$2" ||  { echo "Couldn't add watermark."; exit 1; }
+}
+
+# Remember full path to watermark file if present
+if [ -f "$watermark" ]; then
+    watermark=$(pwd)/$watermark 
 else
-    echo "'$SOURCE' directory does not exist";
+    echo "File '$watermark' containing watermark must be in the same directory as this script";
     exit 1;
 fi
 
-if [ -f ../"$WM" ]; then
-        if [ ! -d "$PUBLISH" ]; then
-            mkdir "$PUBLISH" || exit 1;
-        fi
-        cd "$SMALL" || { echo "'$SMALL' folder dissapeared!!"; exit 1;}
-        for f in ./*.jpg 
-            do
-                if [ -f "$f" ]; then                
-                    echo "Adding watermark to '$f'";
-                    composite -gravity south ../../$WM "$f" ../"$PUBLISH"/"$f" ||  { echo "Couldn't add watermark."; exit 1; }
-                else
-                    echo "File '$f' not found";
-                    exit 1;
-                fi
-            done
-        cd ../..;
-        if mv "$SOURCE" "$SOURCE"_done
-            then echo "Operation completed";
-        else echo "'$SOURCE' folder rename failed";
-            exit 1;
-        fi        
-else
-    echo "File '$WM' containing watermark must be in the same directory as this script";
-fi
+check_folder "$pics_dir"
