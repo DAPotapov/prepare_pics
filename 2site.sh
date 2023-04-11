@@ -1,21 +1,20 @@
 #!/usr/bin/bash 
 
-if [ -z "$1" ]; then
+if [ -z "$*" ]; then
     echo "This script prepares images (changes size and adds watermark) to be published on Wordpress site.";
     echo "Modified files saved in sub-folders.";
     echo "Existing files with same names will be overwritten.";
     echo 
-    echo "Syntax: ./2site.sh <folder name>";
+    echo "Syntax: ./2site.sh <folder name> [folder name-2] [...] [*]-for all";
     exit 1;
 fi
 
-pics_dir="$1"
 # Suffixes for processed files' folders
 small=_sm
 publish=_publish
 # This value set for vertical size in wordpress settings
 vsize=1024
-watermark=watermark.png # надо сохранить полный путь к файлу
+watermark=watermark.png
 
 check_folder ()
 {
@@ -71,4 +70,11 @@ else
     exit 1;
 fi
 
-check_folder "$pics_dir"
+for folder in "$@"; do
+    if [ -d "${folder}" ]; then
+        check_folder "${folder}"
+    else
+        echo "'${folder}' is not a directory, skipping"
+    fi
+done
+
