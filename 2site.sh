@@ -19,13 +19,15 @@ watermark=watermark.png
 check_folder ()
 {
     cd "$1" || exit 1;
+    # f should be local, otherwise it will contain last precessed node in recursive call and break renaming of processed folder
+    local f
     for f in *; do
         if [ -d "$f" ]; then
             if [ "${f: -3}" == "_sm" ] || [ "${f: -8}" == "_publish" ] || [ "${f: -5}" == "_done" ]; then
                 echo "'$f' seems like already processed folder - won't be processed"
             else
-                echo "'$f' is directory, going deeper"
                 check_folder "$f"
+                mv "$f" "$f"_done || { echo "Error while renaming processed folder '$f'"; exit 1; }
             fi
         elif [ -f "$f" ]; then
             if [[ $(file --mime-type -b "$f") =~ image* ]]; then
