@@ -71,6 +71,9 @@ else
 fi
 
 for folder in "$@"; do
+    if [ "${folder: -1}" == "/" ]; then
+        folder="${folder:0: -1}"
+    fi
     if [ -d "${folder}" ]; then
         check_folder "${folder}"
     else
