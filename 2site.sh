@@ -9,9 +9,14 @@ if [ -z "$*" ]; then
     exit 1;
 fi
 
-# Suffixes for processed files' folders
+# Suffixes for processed files' folders 
 small=_sm
+small_length=${#small}
 publish=_publish
+publish_length=${#publish}
+result=_done
+result_length=${#result}
+echo "Lengths: $small_length, $publish_length, $result_length"
 # This value set for vertical size in wordpress settings
 vsize=1024
 watermark=watermark.png
@@ -23,7 +28,7 @@ check_folder ()
     local f
     for f in *; do
         if [ -d "$f" ]; then
-            if [ "${f: -3}" == "_sm" ] || [ "${f: -8}" == "_publish" ] || [ "${f: -5}" == "_done" ]; then
+            if [ "${f: -$small_length}" == "$small" ] || [ "${f: -$publish_length}" == "$publish" ] || [ "${f: -$result_length}" == "$result" ]; then
                 echo "'$f' seems like already processed folder - won't be processed"
             else
                 check_folder "$f"
@@ -61,7 +66,7 @@ process_files ()
         mkdir "$1$publish" || exit 1;
     fi
     echo "Adding watermark to '$f'";
-    composite -gravity south "$watermark" "$2" "$1$publish"/"$2" ||  { echo "Couldn't add watermark."; exit 1; }
+    composite -gravity south "$watermark" "$1$small/$2" "$1$publish"/"$2" ||  { echo "Couldn't add watermark."; exit 1; }
 }
 
 # Remember full path to watermark file if present
@@ -76,10 +81,10 @@ for folder in "$@"; do
     if [ "${folder: -1}" == "/" ]; then
         folder="${folder:0: -1}"
     fi
-    if [ -d "${folder}" ]; then
-        check_folder "${folder}"
+    if [ -d "$folder" ]; then
+        check_folder "$folder"
     else
-        echo "'${folder}' is not a directory, skipping"
+        echo "'$folder' is not a directory, skipping"
     fi
 done
 
