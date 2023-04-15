@@ -16,7 +16,6 @@ publish=_publish
 publish_length=${#publish}
 result=_done
 result_length=${#result}
-echo "Lengths: $small_length, $publish_length, $result_length"
 # This value set for vertical size in wordpress settings
 vsize=1024
 watermark=watermark.png
