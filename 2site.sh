@@ -31,7 +31,7 @@ check_folder ()
                 echo "'$f' seems like already processed folder - won't be processed"
             else
                 check_folder "$f"
-                mv "$f" "$f"_done || { echo "Error while renaming processed folder '$f'"; exit 1; }
+                # mv "$f" "$f"_done || { echo "Error while renaming processed folder '$f'"; exit 1; }
             fi
         elif [ -f "$f" ]; then
             if [[ $(file --mime-type -b "$f") =~ image* ]]; then
@@ -45,6 +45,7 @@ check_folder ()
         fi
     done
     cd ..
+    mv "$1" "$1"_done || { echo "Error while renaming processed folder '$1'"; exit 1; }
 }
 
 process_files ()
@@ -53,19 +54,30 @@ process_files ()
     if [ ! -d "$1$small" ]; then
         mkdir "$1$small" || { echo "Couldn't create folder '$1$small'. Maybe don't have enough permissions."; exit 1; }        
     fi
+    fname="${2%.*}"
+    fext="${2##*.}"
+    if [ "$fext" != jpg ]; then
+        newname="$fname".jpg
+    else
+        newname="$2"
+    fi
     height=$(identify -format '%h' "$2")
     if [ "$height" -gt "$vsize" ]; then
-        echo "Resizing '$2'";
-        convert -resize x$vsize "$2" "$1$small/$2"  || { echo "Couldn't resize file '$2'."; exit 1; }
+        echo "Resizing '$2' to '$newname'";
+        convert -resize x$vsize "$2" "$1$small/$newname"  || { echo "Couldn't resize file '$2'."; exit 1; }
     else
         echo "File '$2' height ('$height') is lower than '$vsize'. No need to resize";
-        cp "$2" "$1$small" || { echo "Error while copying file '$2' to '$1$small'"; exit 1; }
+        if [ "$fext" != jpg ]; then
+            convert "$2" "$1$small/$newname"  || { echo "Couldn't convert file '$2' to jpeg."; exit 1; }
+        else
+            cp "$2" "$1$small" || { echo "Error while copying file '$2' to '$1$small'"; exit 1; }
+        fi
     fi
     if [ ! -d "$1$publish" ]; then
         mkdir "$1$publish" || exit 1;
     fi
-    echo "Adding watermark to '$f'";
-    composite -gravity south "$watermark" "$1$small/$2" "$1$publish"/"$2" ||  { echo "Couldn't add watermark."; exit 1; }
+    echo "Adding watermark to '$newname'";
+    composite -gravity south "$watermark" "$1$small/$newname" "$1$publish"/"$newname" ||  { echo "Couldn't add watermark."; exit 1; }
 }
 
 # Remember full path to watermark file if present
