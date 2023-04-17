@@ -31,7 +31,6 @@ check_folder ()
                 echo "'$f' seems like already processed folder - won't be processed"
             else
                 check_folder "$f"
-                # mv "$f" "$f"_done || { echo "Error while renaming processed folder '$f'"; exit 1; }
             fi
         elif [ -f "$f" ]; then
             if [[ $(file --mime-type -b "$f") =~ image* ]]; then
@@ -45,6 +44,7 @@ check_folder ()
         fi
     done
     cd ..
+    # rename processed folder
     mv "$1" "$1"_done || { echo "Error while renaming processed folder '$1'"; exit 1; }
 }
 
@@ -64,14 +64,10 @@ process_files ()
     height=$(identify -format '%h' "$2")
     if [ "$height" -gt "$vsize" ]; then
         echo "Resizing '$2' to '$newname'";
-        convert -resize x$vsize "$2" "$1$small/$newname"  || { echo "Couldn't resize file '$2'."; exit 1; }
+        convert -resize x$vsize "$2" -strip "$1$small/$newname"  || { echo "Couldn't resize file '$2'."; exit 1; }
     else
-        echo "File '$2' height ('$height') is lower than '$vsize'. No need to resize";
-        if [ "$fext" != jpg ]; then
-            convert "$2" "$1$small/$newname"  || { echo "Couldn't convert file '$2' to jpeg."; exit 1; }
-        else
-            cp "$2" "$1$small" || { echo "Error while copying file '$2' to '$1$small'"; exit 1; }
-        fi
+        echo "File '$2' height ('$height') not larger than '$vsize'. No need to resize";
+        convert "$2" -strip "$1$small/$newname"  || { echo "Couldn't convert file '$2' to jpeg."; exit 1; }
     fi
     if [ ! -d "$1$publish" ]; then
         mkdir "$1$publish" || exit 1;
